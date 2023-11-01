@@ -81,7 +81,3 @@ def add_to_db(user, data, type):
 
     conn.commit()
     conn.close()
-
-
-if __name__ == "__main__":
-    app.run(host="https://grabbed.onrender.com", port=5000)
