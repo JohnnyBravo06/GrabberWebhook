@@ -47,6 +47,53 @@ def webhook():
         abort(404)
 
 
+@app.route("/get/<user>", methods=["GET"])
+def get(user):
+    try:
+        if request.method == "GET":
+            conn = sqlite3.connect("grabber.db")
+            c = conn.cursor()
+
+            data = c.execute(
+                "SELECT * FROM grabber WHERE user=?", (user,)).fetchone()
+
+            if data is None:
+                return "User not found."
+
+            conn.commit()
+            conn.close()
+
+            return str(data)
+        else:
+            abort(404)
+    except Exception as e:
+        print(e)
+        abort(404)
+
+
+@app.route("/getall", methods=["GET"])
+def getall():
+    try:
+        if request.method == "GET":
+            conn = sqlite3.connect("grabber.db")
+            c = conn.cursor()
+
+            data = c.execute("SELECT * FROM grabber").fetchall()
+
+            if data is None:
+                return "User not found."
+
+            conn.commit()
+            conn.close()
+
+            return str(data)
+        else:
+            abort(404)
+    except Exception as e:
+        print(e)
+        abort(404)
+
+
 def generate_db():
     conn = sqlite3.connect("grabber.db")
     c = conn.cursor()
