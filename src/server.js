@@ -169,8 +169,17 @@ app.get("/get/user/:user/browsers/pre", function (req, res) {
     //}
     //}
 
+    // Remove the first " and the last "
+
+    // Parse the JSON
     const browserData = JSON.parse(row.browser);
-    const browserKeys = Object.keys(browserData);
+
+    browserData[0] = "";
+    const removedLast = browserData.substring(0, browserData.length - 1);
+
+    const browserKeys = Object.keys(removedLast);
+    res.json(removedLast);
+    return;
 
     const browserDataFormatted = browserKeys.map((browserKey) => {
       const browser = browserData[browserKey];
@@ -178,7 +187,6 @@ app.get("/get/user/:user/browsers/pre", function (req, res) {
       //{\"columns\": [\"name\", \"value\", \"value_lower\", \"date_created\", \"date_last_used\", \"count\"], \"results\": \"[[\\\"username\\\", \\\"95423035\\\", \\\"95423035\\\", 1698934710, 1698934710, 1], [\\\"edPaHX\\\", \\\"140406 89347\\\", \\\"140406 89347\\\", 1698912633, 1698912633, 1],
 
       const browserFormatted = browserKeys.map((browserKey) => {
-        console.log(browser);
         return {
           [browserKey]: browser[browserKey]?.results?.length || 0,
         };
