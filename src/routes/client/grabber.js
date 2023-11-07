@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-router.post("/grabify", function (req, res) {
+router.post("/grab", function (req, res) {
   const body = req.body;
   const dataType = body.dataType; // Update this to 'dataType' if needed
   const data_information = body.data;

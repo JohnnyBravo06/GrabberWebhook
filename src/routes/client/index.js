@@ -13,7 +13,7 @@ router.post("/register", function (req, res) {
   const email = body.email;
   const password = body.password;
 
-  if (!req.user || !req.user.id || req.user.type !== "client") {
+  if (!req.user || !req.user.id || req.user.type !== "user") {
     res.status(401).json({
       message: "error",
       data: "You must be logged in to register a client",

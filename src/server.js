@@ -56,7 +56,34 @@ function conditionalJWT(req, res, next) {
   }
 }
 
+const SQLRegex = new RegExp(
+  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+);
+
+function protectSQLInjections(req, res, next) {
+  let hasSQLInjection = false;
+  const body = req.body;
+
+  for (const key in body) {
+    if (typeof body[key] === "string") {
+      if (SQLRegex.test(body[key])) {
+        hasSQLInjection = false;
+        break;
+      }
+    }
+  }
+  if (hasSQLInjection) {
+    res
+      .status(400)
+      .json({ error: "Invalid request", ban: "SQL Attack has been attempted" });
+    return;
+  } else {
+    next();
+  }
+}
+
 // Use the conditionalJWT middleware
+app.use(protectSQLInjections);
 app.use(conditionalJWT);
 
 app.get("/", function (req, res) {
@@ -67,8 +94,6 @@ app.get("/", function (req, res) {
 });
 
 app.use("/api/v2", routes);
-
-
 
 app.listen(HTTP_PORT, () => {
   console.log("Server running on port %PORT%".replace("%PORT%", HTTP_PORT));

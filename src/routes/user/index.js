@@ -74,6 +74,7 @@ router.post("/login", function (req, res) {
 
 router.post("/register", function (req, res) {
   const body = req.body;
+  console.log("Body: ", body);
   const name = body.name;
   const email = body.email;
   const password = body.password;
@@ -102,6 +103,7 @@ router.post("/register", function (req, res) {
     }
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
+      console.log(email);
       res.status(400).json({
         message: "error",
         data: "Invalid email",
