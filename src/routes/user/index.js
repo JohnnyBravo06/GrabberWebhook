@@ -21,6 +21,11 @@ router.get("/current_user", function (req, res) {
       return;
     }
 
+    if (!row) {
+      res.status(401).json({ message: "failure", error: "Unauthorized" });
+      return;
+    }
+
     // Do not include password, collections or scans
     const customRow = {
       id: row.id,
@@ -160,6 +165,32 @@ router.get("/user/:id", function (req, res) {
       data: row,
     });
   });
+});
+
+router.post("/verify-token", function (req, res) {
+  if (!req.user) {
+    res.status(200).json({ message: "failure", status: "Unauthorized" });
+    return;
+  } else {
+    // Check if the user exists
+    const sql = `SELECT * FROM users WHERE id=?`;
+    const params = [req.user.id];
+
+    db.get(sql, params, function (err, row) {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+
+      if (!row) {
+        res.status(401).json({ message: "failure", error: "Unauthorized" });
+        return;
+      }
+
+      res.status(200).json({ message: "success", status: "Authorized" });
+      return;
+    });
+  }
 });
 
 module.exports = router;

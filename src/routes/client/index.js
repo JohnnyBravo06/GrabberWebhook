@@ -308,9 +308,17 @@ router.get(
 );
 
 // Custom Routes for special data types
-router.get("/client/:client/browsers/pre", function (req, res) {
-  const sql = `SELECT browser FROM grabber WHERE client=?`;
-  const params = [req.params.client];
+router.get("/client/:id/browsers/pre", function (req, res) {
+  const sql = `SELECT browser FROM grabber WHERE id=?`;
+  const params = [req.params.id];
+
+  if (!req.user || !req.user.id || req.user.type !== "user") {
+    res.status(401).json({
+      message: "error",
+      data: "You must be logged in to view clients",
+    });
+    return;
+  }
 
   db.get(sql, params, function (err, row) {
     if (err) {
