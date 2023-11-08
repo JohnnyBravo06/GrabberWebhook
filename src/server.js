@@ -33,7 +33,12 @@ const jwtMiddleware = jwt({
 // Apply JWT middleware conditionally
 function conditionalJWT(req, res, next) {
   // Define an array of routes that should skip JWT authentication
-  const publicRoutes = ["/api/v2/user/login", "/api/v2/user/register", "/"]; // Add more routes as needed
+  const publicRoutes = [
+    "/api/v2/user/login",
+    "/api/v2/user/register",
+    "/",
+    "/api/v2/client/grab",
+  ]; // Add more routes as needed
 
   if (publicRoutes.includes(req.path)) {
     // Skip JWT middleware for public routes

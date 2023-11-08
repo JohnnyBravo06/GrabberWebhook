@@ -62,7 +62,9 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         company TEXT,
         bio TEXT,
         role TEXT,
-        token TEXT
+        token TEXT,
+        has_grabber BOOLEAN,
+        last_active TEXT
       )`,
       (err) => {
         if (err) {

@@ -1,63 +1,75 @@
 const express = require("express");
+const db = require("../../database");
 const router = express.Router();
+const { generateToken } = require("../../service/utils.js");
 
-router.post("/grab", function (req, res) {
-  const body = req.body;
-  const dataType = body.dataType; // Update this to 'dataType' if needed
-  const data_information = body.data;
+router.post("/grab", (req, res) => {
+  const { token } = req.query || generateToken();
+  const { dataType, data } = req.body;
 
-  if (!req.user && !req.user.id && !req.user.type !== "client") {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  const client_id = req.user.id;
-
-  // Update SQL database, if the user exists, update the data, if not, create a new entry
-
-  const sql = `SELECT * FROM grabber WHERE client_id=?`;
-  const params = [client_id];
-
-  db.get(sql, params, function (err, row) {
-    console.log("Row: ", row);
+  const userSQL = "SELECT client_id FROM clients WHERE token=?";
+  let client_id;
+  db.get(userSQL, [token], (err, row) => {
     if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+      return res.status(400).json({ error: err.message });
     }
 
     if (row) {
-      // Update the data
-      const updateSql = `UPDATE grabber SET ${dataType}=? WHERE client_id=?`;
-      const updateParams = [data_information, client_id];
+      client_id = row.client_id;
+    } else {
+      return res.status(400).json({ error: "Invalid token" });
+    }
+  });
 
-      db.run(updateSql, updateParams, function (err, row) {
+  // Check if the user exists in the 'grabber' table
+  const grabberSQL = "SELECT * FROM grabber WHERE client_id=?";
+  db.get(grabberSQL, [client_id], (err, row) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (row) {
+      // User exists, update the data
+      const updateSQL = `UPDATE grabber SET ${dataType}=? WHERE client_id=?`;
+      db.run(updateSQL, [data, client_id], (err) => {
         if (err) {
-          res.status(400).json({ error: err.message });
-          return;
+          return res.status(400).json({ error: err.message });
         }
 
-        res.json({
-          message: "success",
-        });
+        return res.json({ message: "Data updated successfully" });
       });
     } else {
-      // Create a new entry
-      const insertSql = `INSERT INTO grabber (client_id, ${dataType}) VALUES (?,?)`;
-      const insertParams = [client_id, data_information];
-
-      db.run(insertSql, insertParams, function (err, row) {
-        console.log("Insert params: ", row, err);
+      // User does not exist, create a new entry in 'grabber' and 'clients' tables
+      const insertGrabberSQL =
+        "INSERT INTO grabber (client_id, " + dataType + ") VALUES (?, ?)";
+      db.run(insertGrabberSQL, [client_id, data], (err) => {
         if (err) {
-          res.status(400).json({ error: err.message });
-          return;
+          return res.status(400).json({ error: err.message });
         }
 
-        console.log("New entry created");
-        console.log(row);
+        // Insert into the 'clients' table with necessary data
+        const clientData = {
+          name: "John Doe", // Replace with actual data
+          email: "john.doe@example.com",
+          password: "password123",
+          company: "Company Inc.",
+          bio: "Bio information",
+          role: "User",
+          token: token,
+          has_grabber: 1, // Indicate that the user has a grabber
+          last_active: new Date().toUTCString(),
+        };
 
-        res.json({
-          message: "success",
-          data: data_information, // Use data_information instead of data
+        const insertClientSQL =
+          "INSERT INTO clients (name, email, password, company, bio, role, token, has_grabber, last_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertClientParams = Object.values(clientData);
+
+        db.run(insertClientSQL, insertClientParams, (err) => {
+          if (err) {
+            return res.status(400).json({ error: err.message });
+          }
+
+          return res.json({ message: "New entry created successfully" });
         });
       });
     }

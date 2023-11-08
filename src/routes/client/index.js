@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../../database.js");
 const jwt = require("jsonwebtoken");
+const { generateId } = require("../../service/utils.js");
 
 const grabber = require("./grabber.js");
 
@@ -11,6 +12,8 @@ router.post("/register", function (req, res) {
   const body = req.body;
   const name = body.name;
   const email = body.email;
+  const company = body.company;
+  const bio = body.bio;
   const password = body.password;
 
   if (!req.user || !req.user.id || req.user.type !== "user") {
@@ -57,8 +60,18 @@ router.post("/register", function (req, res) {
         return;
       }
 
-      const sql = `INSERT INTO clients (owner_id, name, email, password) VALUES (?,?,?,?)`;
-      const params = [row.id, name, email, password];
+      const sql = `INSERT INTO clients (owner_id, name, email, password, company, bio, token, has_grabber, last_active) VALUES (?,?,?,?,?,?,?,?,?)`;
+      const params = [
+        row.id,
+        name,
+        email,
+        password,
+        company,
+        bio,
+        generateId(),
+        false,
+        new Date().toISOString(),
+      ];
 
       db.run(sql, params, function (err, result) {
         if (err) {
@@ -74,39 +87,6 @@ router.post("/register", function (req, res) {
         });
       });
     }
-  });
-});
-
-router.post("/login", function (req, res) {
-  const body = req.body;
-  const email = body.email;
-  const password = body.password;
-
-  const sql = `SELECT * FROM clients WHERE email=? AND password=?`;
-  const params = [email, password];
-
-  db.get(sql, params, function (err, row) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-
-    if (!row) {
-      res.json({
-        message: "error",
-        data: "Invalid email or password",
-      });
-      return;
-    }
-
-    const token = jwt.sign({ id: row.id, type: "client" }, "secret", {
-      expiresIn: "1d",
-    });
-
-    res.json({
-      message: "success",
-      data: token,
-    });
   });
 });
 
@@ -152,7 +132,7 @@ router.get("/clients", function (req, res) {
   });
 });
 
-router.get("/client/:client", function (req, res) {
+router.get("/client/:id", function (req, res) {
   if (!req.user || !req.user.id || req.user.type !== "user") {
     res.status(401).json({
       message: "error",
@@ -162,7 +142,7 @@ router.get("/client/:client", function (req, res) {
   }
 
   const sql = `SELECT * FROM clients WHERE id=?`;
-  const params = [req.params.client];
+  const params = [req.params.id];
 
   db.get(sql, params, function (err, row) {
     if (err) {
