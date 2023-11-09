@@ -4,7 +4,7 @@ const db = require("../../database.js");
 const jwt = require("jsonwebtoken");
 const { generateId } = require("../../service/utils.js");
 
-const grabber = require("./grabber.js");
+const grabber = require("../scan/grabber.js");
 
 router.use("/admin", grabber);
 

@@ -2,6 +2,12 @@ const express = require("express");
 const router = express.Router();
 const db = require("../../database.js");
 const jwt = require("jsonwebtoken");
+const {
+  getUser,
+  createUser,
+  getUserFromName,
+  getUserFromEmail,
+} = require("../../models/User.js");
 
 router.get("/current_user", function (req, res) {
   console.log("Current user: ", req.user);
@@ -46,6 +52,7 @@ router.post("/login", function (req, res) {
   const email = body.email;
   const password = body.password;
 
+  /*
   const sql = `SELECT * FROM users WHERE email=? AND password=?`;
   const params = [email, password];
 
@@ -74,6 +81,36 @@ router.post("/login", function (req, res) {
         expiresIn: "1d",
       }),
     });
+  });*/
+
+  getUserFromEmail(db, email).then((user) => {
+    console.log("User: ", user);
+    if (!user) {
+      console.log("User not found");
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    if (user.password !== password) {
+      console.log("Password incorrect");
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    // Do not include password, collections or scans
+    const customRow = {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+    };
+
+    res.json({
+      message: "success",
+      data: customRow,
+      token: jwt.sign({ id: user.id, type: "user" }, "secret", {
+        expiresIn: "1d",
+      }),
+    });
   });
 });
 
@@ -85,7 +122,7 @@ router.post("/register", function (req, res) {
   const password = body.password;
 
   // Check if the user already exists
-  const sql = `SELECT * FROM users WHERE name=?`;
+  /*const sql = `SELECT * FROM users WHERE name=?`;
   const params = [name];
 
   db.get(sql, params, function (err, row) {
@@ -130,6 +167,20 @@ router.post("/register", function (req, res) {
         message: "success",
       });
     });
+  });*/
+  getUserFromName(db, name).then((response) => {
+    if (response) {
+      console.log("User: ", response);
+      res.status(401).json({ error: "User already exists" });
+      return;
+    } else {
+      createUser(db, { name, email, password, role: "user" }).then((result) => {
+        console.log("Result: ", result);
+        res.json({
+          message: "success",
+        });
+      });
+    }
   });
 });
 
@@ -169,6 +220,7 @@ router.get("/user/:id", function (req, res) {
 
 router.post("/verify-token", function (req, res) {
   if (!req.user) {
+    console.log("User not found");
     res.status(200).json({ message: "failure", status: "Unauthorized" });
     return;
   } else {
@@ -183,6 +235,7 @@ router.post("/verify-token", function (req, res) {
       }
 
       if (!row) {
+        console.log("User not found row");
         res.status(401).json({ message: "failure", error: "Unauthorized" });
         return;
       }

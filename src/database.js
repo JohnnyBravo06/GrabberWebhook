@@ -2,44 +2,28 @@ var sqlite3 = require("sqlite3").verbose();
 var md5 = require("md5");
 
 const DBSOURCE = "db.sqlite";
-
+// Create the 'users' table
 let db = new sqlite3.Database(DBSOURCE, (err) => {
   if (err) {
-    // Cannot open database
     console.error(err.message);
     throw err;
   } else {
-    console.log("Connected to the SQLite database.");
-
-    // Create the 'grabber' table
-    db.run(
-      `CREATE TABLE IF NOT EXISTS grabber (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_id TEXT,
-        browser TEXT,
-        discord TEXT,
-        network TEXT,
-        computer TEXT,
-        custom TEXT
-      )`,
-      (err) => {
-        if (err) {
-          console.error("Error creating 'grabber' table:", err);
-        } else {
-          console.log("'grabber' table created.");
-        }
+    // * Make so that foreign keys are enabled
+    db.run(`PRAGMA foreign_keys = ON`, (err) => {
+      if (err) {
+        console.log("Error enabling foreign keys:", err);
+      } else {
+        console.log("Foreign keys enabled.");
       }
-    );
+    });
 
-    // Create the 'users' table
+    // * Users table
     db.run(
       `CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         email TEXT UNIQUE,
         password TEXT,
-        collections TEXT,
-        scans TEXT,
         role TEXT
       )`,
       (err) => {
@@ -51,26 +35,47 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
       }
     );
 
-    // Create the 'clients' table
+    // * Collections table
     db.run(
-      `CREATE TABLE IF NOT EXISTS clients (
+      `CREATE TABLE IF NOT EXISTS collections (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        owner_id INTEGER,
         name TEXT,
-        email TEXT UNIQUE,
-        password TEXT,
-        company TEXT,
-        bio TEXT,
-        role TEXT,
-        token TEXT,
-        has_grabber BOOLEAN,
-        last_active TEXT
+        description TEXT,
+        tags TEXT,
+        owner_id INTEGER, -- Reference to the user who owns the collection
+        FOREIGN KEY (owner_id) REFERENCES users (id)
       )`,
       (err) => {
         if (err) {
-          console.error("Error creating 'clients' table:", err);
+          console.error("Error creating 'collections' table:", err);
         } else {
-          console.log("'clients' table created.");
+          console.log("'collections' table created.");
+        }
+      }
+    );
+
+    // * Scans table
+    db.run(
+      `CREATE TABLE IF NOT EXISTS scans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT,
+        tags TEXT,
+
+        browser TEXT,
+        discord TEXT,
+        network TEXT,
+
+        collection_id INTEGER, -- Reference to the collection that contains the scan
+        owner_id INTEGER, -- Reference to the user who owns the scan
+        FOREIGN KEY (collection_id) REFERENCES collections (id),
+        FOREIGN KEY (owner_id) REFERENCES users (id)
+      )`,
+      (err) => {
+        if (err) {
+          console.error("Error creating 'scans' table:", err);
+        } else {
+          console.log("'scans' table created.");
         }
       }
     );

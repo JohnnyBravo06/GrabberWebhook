@@ -36,11 +36,13 @@ function conditionalJWT(req, res, next) {
   const publicRoutes = [
     "/api/v2/user/login",
     "/api/v2/user/register",
-    "/",
-    "/api/v2/client/grab",
+    "/api/v2/scan/admin/grab",
   ]; // Add more routes as needed
 
+  console.log("Route", publicRoutes.includes(req.path));
+  console.log("Path", req.path);
   if (publicRoutes.includes(req.path)) {
+    console.log("Skipping JWT middleware");
     // Skip JWT middleware for public routes
     next();
   } else {
