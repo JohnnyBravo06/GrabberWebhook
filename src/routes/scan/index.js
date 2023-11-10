@@ -99,6 +99,8 @@ router.get("/scan/:id/attacks/browser/:browser/:type", (req, res) => {
     }
 
     const browserData = JSON.parse(result[0].browser);
+    console.log(browser, type);
+    console.log("Browser data: ", browserData["chrome"]);
 
     //console.log("Browser data: ", browserData);
     //results: [
